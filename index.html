@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>English Conversation Station</title>
+  <style>
+    :root{--navy:#183153;--blue:#3987d7;--sky:#eaf5ff;--gold:#ffc857;--green:#2f9e6f;--ink:#243447;--muted:#64748b}
+    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#eef8ff,#fff7df);color:var(--ink)}
+    header{background:linear-gradient(120deg,var(--navy),var(--blue));color:#fff;padding:28px 18px;text-align:center;box-shadow:0 6px 22px #18315333}
+    h1{margin:0;font-size:clamp(27px,5vw,48px)}header p{margin:8px 0 0;font-size:17px}.wrap{max-width:1080px;margin:auto;padding:22px}
+    .intro,.practice{background:#fff;border-radius:22px;padding:20px;box-shadow:0 10px 30px #18315318}.intro{margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:13px}.card{border:0;border-radius:18px;padding:18px 12px;background:#fff;box-shadow:0 6px 20px #1831531c;cursor:pointer;text-align:left;font-weight:700;color:var(--navy);font-size:15px;transition:.2s}.card:hover,.card.active{transform:translateY(-3px);background:var(--navy);color:#fff}.emoji{font-size:31px;display:block;margin-bottom:8px}
+    .practice{display:none;margin-top:22px}.practice.show{display:block}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.top h2{margin:0;color:var(--navy)}.tag{background:var(--sky);padding:7px 12px;border-radius:30px;color:var(--blue);font-weight:700}
+    .bubble{max-width:82%;padding:15px 17px;border-radius:18px;margin:16px 0;line-height:1.5}.ai{background:var(--sky);border-bottom-left-radius:4px}.student{background:#e8f8ef;margin-left:auto;border-bottom-right-radius:4px}.speaker{border:0;background:transparent;cursor:pointer;font-size:21px;vertical-align:middle}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.controls button{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:#fff}.mic{background:#ef476f;color:#fff}.next{background:var(--green);color:#fff}.light{background:#edf2f7;color:var(--navy)}
+    .answer{display:flex;gap:8px;margin-top:14px}.answer input{flex:1;min-width:0;border:2px solid #dbe7f3;border-radius:12px;padding:12px;font-size:16px}.status{min-height:25px;margin-top:10px;color:var(--muted);font-weight:600}.hint{background:#fff7d8;padding:12px;border-radius:12px;margin-top:12px}.progress{height:9px;background:#e6edf4;border-radius:10px;overflow:hidden;margin:15px 0}.progress span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:.3s}
+    footer{text-align:center;color:var(--muted);padding:30px 10px}@media(max-width:600px){.bubble{max-width:94%}.wrap{padding:14px}.answer{flex-direction:column}}
+  </style>
+</head>
+<body>
+<header><h1>🎧 English Conversation Station</h1><p>Listen • Speak • Type • Learn</p></header>
+<main class="wrap">
+  <section class="intro"><h2>Choose a situation</h2><p>Select one of 15 real-life situations. Listen to the AI, then answer by speaking or typing.</p><div id="grid" class="grid"></div></section>
+  <section id="practice" class="practice">
+    <div class="top"><h2 id="title"></h2><span id="step" class="tag"></span></div><div class="progress"><span id="bar"></span></div>
+    <div id="aiBubble" class="bubble ai"></div><div class="hint"><b>Suggested answer:</b> <span id="hint"></span></div><div id="studentBubble" class="bubble student">Your answer will appear here.</div>
+    <div class="answer"><input id="typed" placeholder="Type your answer here..."><button class="primary" onclick="submitTyped()">Send</button></div>
+    <div class="controls"><button class="primary" onclick="speakPrompt()">🔊 Listen again</button><button class="mic" onclick="startListening()">🎤 Speak answer</button><button class="light" onclick="showHint()">💡 Show answer</button><button class="next" onclick="nextTurn()">Next ➜</button></div>
+    <div id="status" class="status"></div>
+  </section>
+</main><footer>Ban Nong Na Hai Nonsaad School • English Learning Station</footer>
+<script>
+const scenes=[
+ {e:'🏫',t:'At School',d:[['Good morning! What is your name?','Good morning! My name is Mali.'],['What grade are you in?','I am in Grade 4.'],['What is your favorite subject?','My favorite subject is English.']]},
+ {e:'🍜',t:'At a Restaurant',d:[['Hello. May I take your order?','Yes, I would like fried rice, please.'],['Would you like something to drink?','I would like some water, please.'],['Is everything okay?','Yes, it is delicious. Thank you.']]},
+ {e:'🛍️',t:'At a Shop',d:[['Hello. Can I help you?','Yes, I am looking for a T-shirt.'],['What color would you like?','I would like a blue one.'],['Would you like to try it on?','Yes, please.']]},
+ {e:'🏥',t:'At the Hospital',d:[['Hello. What is the matter?','I have a headache.'],['Do you have a fever?','No, I do not.'],['Please take this medicine and get some rest.','Thank you, doctor.']]},
+ {e:'🚌',t:'At the Bus Stop',d:[['Excuse me. Which bus goes to the city center?','Bus number ten goes there.'],['How long will it take?','It will take about twenty minutes.'],['Thank you for your help.','You are welcome.']]},
+ {e:'✈️',t:'At the Airport',d:[['May I see your passport, please?','Here you are.'],['Where are you traveling today?','I am traveling to Bangkok.'],['Have a nice flight!','Thank you.']]},
+ {e:'🏨',t:'At a Hotel',d:[['Welcome. How can I help you?','I have a reservation.'],['What is your name, please?','My name is Sunisa.'],['Here is your room key.','Thank you very much.']]},
+ {e:'📚',t:'At the Library',d:[['Hello. Can I help you find a book?','Yes, I need an English storybook.'],['Do you have a library card?','Yes, here it is.'],['Please return the book next week.','Okay. Thank you.']]},
+ {e:'🚉',t:'At the Train Station',d:[['Where would you like to go?','I would like to go to Bangkok.'],['One-way or round trip?','One-way, please.'],['The train leaves at nine o’clock.','Thank you.']]},
+ {e:'👮',t:'Asking for Directions',d:[['Excuse me. Can I help you?','Yes. Where is the bank?'],['Go straight and turn left.','Is it far from here?'],['No, it is next to the post office.','Thank you very much.']]},
+ {e:'🏪',t:'At a Convenience Store',d:[['Hello. Did you find everything?','Yes, thank you.'],['Would you like a bag?','Yes, please.'],['That will be eighty baht.','Here you are.']]},
+ {e:'🌳',t:'At the Park',d:[['Hello! What are you doing?','I am riding my bicycle.'],['Do you come here often?','Yes, I come here every weekend.'],['Have fun!','Thank you!']]},
+ {e:'📞',t:'On the Phone',d:[['Hello. May I speak to Anna, please?','Speaking. Who is calling?'],['This is Ben. Are you free this afternoon?','Yes, I am.'],['Let’s meet at the café at three.','Okay. See you then.']]},
+ {e:'🍎',t:'At the Market',d:[['Good morning. How much are these apples?','They are fifty baht per kilo.'],['Can I have one kilo, please?','Certainly. Anything else?'],['No, thank you.','Here you are.']]},
+ {e:'🏡',t:'Visiting a Friend',d:[['Welcome to my home!','Thank you for inviting me.'],['Would you like some juice?','Yes, please.'],['Let’s play a game.','That sounds great!']]}
+];
+let scene=0,turn=0,heard='';const grid=document.getElementById('grid');
+scenes.forEach((s,i)=>{let b=document.createElement('button');b.className='card';b.innerHTML=`<span class="emoji">${s.e}</span>${i+1}. ${s.t}`;b.onclick=()=>openScene(i,b);grid.appendChild(b)});
+function openScene(i,b){scene=i;turn=0;document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('practice').classList.add('show');render();document.getElementById('practice').scrollIntoView({behavior:'smooth'});setTimeout(speakPrompt,400)}
+function render(){let s=scenes[scene],p=s.d[turn][0];document.getElementById('title').textContent=s.e+' '+s.t;document.getElementById('step').textContent=`Turn ${turn+1} of ${s.d.length}`;document.getElementById('bar').style.width=((turn+1)/s.d.length*100)+'%';document.getElementById('aiBubble').innerHTML=`<b>AI:</b> ${p} <button class="speaker" onclick="speakPrompt()">🔊</button>`;document.getElementById('hint').textContent='Tap “Show answer”';document.getElementById('studentBubble').textContent='Your answer will appear here.';document.getElementById('typed').value='';document.getElementById('status').textContent='Listen, then speak or type your answer.'}
+function speakPrompt(){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(scenes[scene].d[turn][0]);u.lang='en-US';u.rate=.82;speechSynthesis.speak(u)}
+function sayAnswer(txt){document.getElementById('studentBubble').innerHTML='<b>You:</b> '+txt;document.getElementById('status').textContent='Great job! Press Next to continue.';let u=new SpeechSynthesisUtterance(txt);u.lang='en-US';u.rate=.82;speechSynthesis.speak(u)}
+function submitTyped(){let v=document.getElementById('typed').value.trim();if(v)sayAnswer(v);else document.getElementById('status').textContent='Please type an answer first.'}
+function showHint(){document.getElementById('hint').textContent=scenes[scene].d[turn][1]}
+function nextTurn(){if(turn<scenes[scene].d.length-1){turn++;render();setTimeout(speakPrompt,350)}else{document.getElementById('status').textContent='🎉 Situation complete! Choose another situation above.';speechSynthesis.speak(new SpeechSynthesisUtterance('Excellent work! Situation complete.'))}}
+function startListening(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){document.getElementById('status').textContent='Speech recognition is not supported here. Please use Chrome or type your answer.';return}let r=new SR();r.lang='en-US';r.interimResults=false;r.onstart=()=>document.getElementById('status').textContent='Listening… Please speak now.';r.onresult=e=>{heard=e.results[0][0].transcript;document.getElementById('typed').value=heard;sayAnswer(heard)};r.onerror=e=>document.getElementById('status').textContent='Microphone error: '+e.error+'. Please allow microphone access and try again.';r.start()}
+</script></body></html>
