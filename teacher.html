@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teacher Dashboard | English Conversation Station</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eef7ff;color:#183153}
+header{padding:28px 18px;text-align:center;color:white;background:linear-gradient(120deg,#183153,#3987d7)}
+main{max-width:1100px;margin:auto;padding:18px}.panel{background:white;border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 8px 24px #18315318}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.field{display:flex;flex-direction:column;gap:5px}
+.field input,.field select{padding:10px;border:1px solid #ccd9e5;border-radius:9px}button{padding:10px 14px;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
+.primary{background:#3987d7;color:white}.green{background:#2f9e6f;color:white}.danger{background:#fee2e2;color:#991b1b}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.card{padding:15px;border-radius:14px;background:#eaf5ff}.card b{font-size:25px;display:block}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:10px;border-bottom:1px solid #e5edf5;text-align:left}th{background:#f4f8fc}
+.note{margin-top:12px;padding:12px;background:#fff7d8;border-radius:10px}@media(max-width:600px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>👩‍🏫 Teacher Dashboard</h1><div>English Conversation Station</div></header>
+<main>
+<section class="panel">
+<h2>ห้องเรียน</h2>
+<div class="toolbar">
+<div class="field"><b>ชั้น</b><select id="grade"><option>P4</option><option>P5</option><option>P6</option><option>M1</option><option>M2</option><option>M3</option></select></div>
+<div class="field"><b>ปีการศึกษา</b><input id="year" type="number" value="2026"></div>
+<div class="field"><b>ภาคเรียน</b><select id="term"><option>1</option><option>2</option></select></div>
+<button class="primary" onclick="loadRoom()">เปิดห้อง</button>
+</div>
+<p id="room"></p>
+<div class="cards"><div class="card">นักเรียน<b id="count">0</b></div><div class="card">ครั้งที่ฝึก<b id="attempts">0</b></div><div class="card">คะแนนเฉลี่ย<b id="average">-</b></div></div>
+<h3>เพิ่มนักเรียน</h3>
+<div class="toolbar"><div class="field"><b>เลขที่/รหัส</b><input id="no"></div><div class="field" style="flex:1;min-width:220px"><b>ชื่อ-สกุล</b><input id="name"></div><button class="green" onclick="addStudent()">+ เพิ่มนักเรียน</button></div>
+<div class="note">Teacher Dashboard เวอร์ชันเริ่มต้น สำหรับจัดรายชื่อนักเรียน ป.4–ม.3 ก่อนเชื่อมคะแนนออนไลน์กับ Supabase</div>
+</section>
+<section class="panel"><h2>สมุดคะแนน</h2><div class="tablewrap"><table><thead><tr><th>เลขที่</th><th>ชื่อ-สกุล</th><th>ชั้น</th><th>ครั้งที่ฝึก</th><th>คะแนนล่าสุด</th><th>คะแนนเฉลี่ย</th><th>จัดการ</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<section class="panel"><a href="index.html">← กลับ English Conversation Station</a></section>
+</main>
+<script>
+const K='ivsaa_roster_v1';let cur=[];
+function k(){return grade.value+'-'+year.value+'-'+term.value}
+function data(){try{return JSON.parse(localStorage.getItem(K)||'{}')}catch(e){return{}}}
+function save(d){localStorage.setItem(K,JSON.stringify(d))}
+function thai(g){return({P4:'ป.4',P5:'ป.5',P6:'ป.6',M1:'ม.1',M2:'ม.2',M3:'ม.3'})[g]}
+function loadRoom(){let d=data();cur=d[k()]||[];room.textContent=thai(grade.value)+' • ปี '+year.value+' • ภาคเรียน '+term.value;render()}
+function addStudent(){let n=name.value.trim();if(!n)return alert('กรุณากรอกชื่อ');let d=data();d[k()]=d[k()]||[];d[k()].push({id:Date.now(),no:no.value.trim(),name:n,attempts:0,last:null,avg:null});save(d);name.value='';no.value='';loadRoom()}
+function del(id){if(!confirm('ลบนักเรียนคนนี้หรือไม่?'))return;let d=data();d[k()]=(d[k()]||[]).filter(x=>x.id!==id);save(d);loadRoom()}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function render(){count.textContent=cur.length;attempts.textContent=cur.reduce((a,x)=>a+(x.attempts||0),0);let ss=cur.filter(x=>x.avg!=null).map(x=>+x.avg);average.textContent=ss.length?(ss.reduce((a,b)=>a+b,0)/ss.length).toFixed(1):'-';rows.innerHTML=cur.length?cur.map(x=>'<tr><td>'+esc(x.no||'-')+'</td><td>'+esc(x.name)+'</td><td>'+thai(grade.value)+'</td><td>'+(x.attempts||0)+'</td><td>'+(x.last??'-')+'</td><td>'+(x.avg??'-')+'</td><td><button class="danger" onclick="del('+x.id+')">ลบ</button></td></tr>').join(''):'<tr><td colspan="7" style="text-align:center;padding:28px;color:#64748b">ยังไม่มีรายชื่อนักเรียน</td></tr>'}
+loadRoom()
+</script>
+</body></html>
