@@ -82,7 +82,7 @@ studentNoEl=document.getElementById('studentNo'),studentNameEl=document.getEleme
 let currentClass=null, students=[];
 
 function gradeThai(g){return ({P4:'ป.4',P5:'ป.5',P6:'ป.6',M1:'ม.1',M2:'ม.2',M3:'ม.3'})[g]||g}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function beToCe(v){const y=Number(v);return y>=2400?y-543:y}
 function ceToBe(v){const y=Number(v);return y<2400?y+543:y}
 function populateYears(){const nowBE=new Date().getFullYear()+543;yearEl.innerHTML='';for(let y=nowBE-3;y<=nowBE+8;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===nowBE)o.selected=true;yearEl.appendChild(o)}}
