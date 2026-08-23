@@ -4,49 +4,127 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Teacher Dashboard | English Conversation Station</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eef7ff;color:#183153}
-header{padding:28px 18px;text-align:center;color:white;background:linear-gradient(120deg,#183153,#3987d7)}
-main{max-width:1100px;margin:auto;padding:18px}.panel{background:white;border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 8px 24px #18315318}
-.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.field{display:flex;flex-direction:column;gap:5px}
-.field input,.field select{padding:10px;border:1px solid #ccd9e5;border-radius:9px}button{padding:10px 14px;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
-.primary{background:#3987d7;color:white}.green{background:#2f9e6f;color:white}.danger{background:#fee2e2;color:#991b1b}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.card{padding:15px;border-radius:14px;background:#eaf5ff}.card b{font-size:25px;display:block}
-.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:10px;border-bottom:1px solid #e5edf5;text-align:left}th{background:#f4f8fc}
-.note{margin-top:12px;padding:12px;background:#fff7d8;border-radius:10px}@media(max-width:600px){.cards{grid-template-columns:1fr}}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,"Noto Sans Thai",sans-serif;background:linear-gradient(135deg,#eef8ff,#fff8e4);color:#183153}
+header{background:linear-gradient(120deg,#183153,#3987d7);color:#fff;text-align:center;padding:28px 16px}
+main{max-width:1150px;margin:auto;padding:18px} .panel{background:#fff;border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 8px 25px #18315318}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end} .field{display:flex;flex-direction:column;gap:5px}
+input,select{padding:11px;border:1px solid #cbd8e6;border-radius:10px;font-size:15px} button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
+.primary{background:#3987d7;color:#fff} .green{background:#2f9e6f;color:#fff} .danger{background:#fee2e2;color:#991b1b} .light{background:#edf2f7;color:#183153}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0} .card{background:#eaf5ff;padding:15px;border-radius:14px} .card b{display:block;font-size:26px}
+table{width:100%;border-collapse:collapse;min-width:820px} th,td{padding:10px;border-bottom:1px solid #e5edf5;text-align:left} th{background:#f4f8fc} .tablewrap{overflow:auto}
+#app{display:none} .msg{padding:10px;border-radius:10px;margin:10px 0;background:#f5f8fb} .login{max-width:470px;margin:35px auto} a{color:#2467a8}
+@media(max-width:650px){.cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>👩‍🏫 Teacher Dashboard</h1><div>English Conversation Station</div></header>
+<header><h1>👩‍🏫 Teacher Dashboard</h1><div>English Conversation Station • IVSAA Model</div></header>
 <main>
+<section id="login" class="panel login">
+<h2>เข้าสู่ระบบสำหรับครู</h2>
+<p>ใช้บัญชีครูของ Supabase เพื่อจัดการรายชื่อนักเรียนและดูคะแนน</p>
+<div class="field"><b>Email</b><input id="email" type="email" autocomplete="username"></div><br>
+<div class="field"><b>Password</b><input id="password" type="password" autocomplete="current-password"></div><br>
+<button class="primary" onclick="signIn()">เข้าสู่ระบบ</button>
+<div id="loginMsg" class="msg">ยังไม่ได้เข้าสู่ระบบ</div>
+</section>
+
+<div id="app">
 <section class="panel">
-<h2>ห้องเรียน</h2>
+<div class="toolbar"><div style="flex:1"><h2 style="margin:0">จัดการห้องเรียน</h2><div id="who"></div></div><button class="light" onclick="signOut()">ออกจากระบบ</button></div>
+<hr>
 <div class="toolbar">
-<div class="field"><b>ชั้น</b><select id="grade"><option>P4</option><option>P5</option><option>P6</option><option>M1</option><option>M2</option><option>M3</option></select></div>
+<div class="field"><b>ชั้น</b><select id="grade"><option value="P4">ป.4</option><option value="P5">ป.5</option><option value="P6">ป.6</option><option value="M1">ม.1</option><option value="M2">ม.2</option><option value="M3">ม.3</option></select></div>
 <div class="field"><b>ปีการศึกษา</b><input id="year" type="number" value="2026"></div>
-<div class="field"><b>ภาคเรียน</b><select id="term"><option>1</option><option>2</option></select></div>
+<div class="field"><b>ภาคเรียน</b><select id="term"><option value="1">1</option><option value="2">2</option></select></div>
 <button class="primary" onclick="loadRoom()">เปิดห้อง</button>
 </div>
-<p id="room"></p>
-<div class="cards"><div class="card">นักเรียน<b id="count">0</b></div><div class="card">ครั้งที่ฝึก<b id="attempts">0</b></div><div class="card">คะแนนเฉลี่ย<b id="average">-</b></div></div>
+<div id="status" class="msg"></div>
+<div class="cards"><div class="card">นักเรียนทั้งหมด<b id="studentCount">0</b></div><div class="card">จำนวนครั้งที่ฝึก<b id="attemptCount">0</b></div><div class="card">คะแนนเฉลี่ย<b id="avgScore">-</b></div></div>
 <h3>เพิ่มนักเรียน</h3>
-<div class="toolbar"><div class="field"><b>เลขที่/รหัส</b><input id="no"></div><div class="field" style="flex:1;min-width:220px"><b>ชื่อ-สกุล</b><input id="name"></div><button class="green" onclick="addStudent()">+ เพิ่มนักเรียน</button></div>
-<div class="note">Teacher Dashboard เวอร์ชันเริ่มต้น สำหรับจัดรายชื่อนักเรียน ป.4–ม.3 ก่อนเชื่อมคะแนนออนไลน์กับ Supabase</div>
+<div class="toolbar">
+<div class="field"><b>เลขที่/รหัส</b><input id="studentNo" placeholder="เช่น 01"></div>
+<div class="field" style="flex:1;min-width:220px"><b>ชื่อ-สกุล</b><input id="studentName" placeholder="กรอกชื่อ-สกุลนักเรียน"></div>
+<button class="green" onclick="addStudent()">+ บันทึกนักเรียน</button>
+</div>
 </section>
-<section class="panel"><h2>สมุดคะแนน</h2><div class="tablewrap"><table><thead><tr><th>เลขที่</th><th>ชื่อ-สกุล</th><th>ชั้น</th><th>ครั้งที่ฝึก</th><th>คะแนนล่าสุด</th><th>คะแนนเฉลี่ย</th><th>จัดการ</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+
+<section class="panel">
+<h2>รายชื่อนักเรียนและคะแนน</h2>
+<div class="tablewrap"><table><thead><tr><th>เลขที่</th><th>ชื่อ-สกุล</th><th>ชั้น</th><th>ครั้งที่ฝึก</th><th>คะแนนล่าสุด</th><th>คะแนนเฉลี่ย</th><th>วันที่ล่าสุด</th><th>จัดการ</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
 <section class="panel"><a href="index.html">← กลับ English Conversation Station</a></section>
+</div>
 </main>
 <script>
-const K='ivsaa_roster_v1';let cur=[];
-function k(){return grade.value+'-'+year.value+'-'+term.value}
-function data(){try{return JSON.parse(localStorage.getItem(K)||'{}')}catch(e){return{}}}
-function save(d){localStorage.setItem(K,JSON.stringify(d))}
-function thai(g){return({P4:'ป.4',P5:'ป.5',P6:'ป.6',M1:'ม.1',M2:'ม.2',M3:'ม.3'})[g]}
-function loadRoom(){let d=data();cur=d[k()]||[];room.textContent=thai(grade.value)+' • ปี '+year.value+' • ภาคเรียน '+term.value;render()}
-function addStudent(){let n=name.value.trim();if(!n)return alert('กรุณากรอกชื่อ');let d=data();d[k()]=d[k()]||[];d[k()].push({id:Date.now(),no:no.value.trim(),name:n,attempts:0,last:null,avg:null});save(d);name.value='';no.value='';loadRoom()}
-function del(id){if(!confirm('ลบนักเรียนคนนี้หรือไม่?'))return;let d=data();d[k()]=(d[k()]||[]).filter(x=>x.id!==id);save(d);loadRoom()}
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function render(){count.textContent=cur.length;attempts.textContent=cur.reduce((a,x)=>a+(x.attempts||0),0);let ss=cur.filter(x=>x.avg!=null).map(x=>+x.avg);average.textContent=ss.length?(ss.reduce((a,b)=>a+b,0)/ss.length).toFixed(1):'-';rows.innerHTML=cur.length?cur.map(x=>'<tr><td>'+esc(x.no||'-')+'</td><td>'+esc(x.name)+'</td><td>'+thai(grade.value)+'</td><td>'+(x.attempts||0)+'</td><td>'+(x.last??'-')+'</td><td>'+(x.avg??'-')+'</td><td><button class="danger" onclick="del('+x.id+')">ลบ</button></td></tr>').join(''):'<tr><td colspan="7" style="text-align:center;padding:28px;color:#64748b">ยังไม่มีรายชื่อนักเรียน</td></tr>'}
-loadRoom()
+const PROJECT_URL='https://zbmrjexpugcwawvmrtyo.supabase.co';
+const PUBLISHABLE_KEY='sb_publishable_E7iFH6DFoonjDt5WdSYbSQ_HGTB8pbY';
+const sb=supabase.createClient(PROJECT_URL,PUBLISHABLE_KEY);
+let currentClass=null, students=[];
+
+function gradeThai(g){return ({P4:'ป.4',P5:'ป.5',P6:'ป.6',M1:'ม.1',M2:'ม.2',M3:'ม.3'})[g]||g}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m])}
+
+async function init(){
+ const {data:{session}}=await sb.auth.getSession();
+ showSession(session);
+}
+function showSession(session){
+ if(session){login.style.display='none';app.style.display='block';who.textContent='เข้าสู่ระบบ: '+session.user.email;loadRoom();}
+ else{login.style.display='block';app.style.display='none';}
+}
+async function signIn(){
+ loginMsg.textContent='กำลังเข้าสู่ระบบ...';
+ const {data,error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});
+ if(error){loginMsg.textContent='เข้าสู่ระบบไม่สำเร็จ: '+error.message;return}
+ password.value='';showSession(data.session);
+}
+async function signOut(){await sb.auth.signOut();showSession(null)}
+
+async function loadRoom(){
+ status.textContent='กำลังโหลดข้อมูล...';
+ const {data:cls,error}=await sb.from('school_classes').select('*').eq('grade_level',grade.value).eq('academic_year',+year.value).eq('term',+term.value).maybeSingle();
+ if(error){status.textContent='โหลดห้องไม่สำเร็จ: '+error.message;return}
+ if(!cls){currentClass=null;students=[];status.textContent='ยังไม่มีห้องนี้ในฐานข้อมูล';render();return}
+ currentClass=cls;
+ const {data:stu,error:se}=await sb.from('students').select('*').eq('class_id',cls.id).eq('is_active',true).order('student_no');
+ if(se){status.textContent='โหลดรายชื่อไม่สำเร็จ: '+se.message;return}
+ students=stu||[];
+ status.textContent=gradeThai(cls.grade_level)+' • ปี '+cls.academic_year+' • ภาคเรียน '+cls.term;
+ await render();
+}
+async function addStudent(){
+ if(!currentClass)return alert('กรุณาเปิดห้องก่อน');
+ const n=studentName.value.trim(); if(!n)return alert('กรุณากรอกชื่อ-สกุล');
+ const {error}=await sb.from('students').insert({student_no:studentNo.value.trim()||null,full_name:n,class_id:currentClass.id});
+ if(error)return alert('บันทึกไม่สำเร็จ: '+error.message);
+ studentNo.value='';studentName.value='';await loadRoom();
+}
+async function editStudent(id,no,name){
+ const newNo=prompt('เลขที่/รหัสนักเรียน',no||''); if(newNo===null)return;
+ const newName=prompt('ชื่อ-สกุลนักเรียน',name); if(newName===null||!newName.trim())return;
+ const {error}=await sb.from('students').update({student_no:newNo.trim()||null,full_name:newName.trim()}).eq('id',id);
+ if(error)return alert('แก้ไขไม่สำเร็จ: '+error.message); await loadRoom();
+}
+async function removeStudent(id,name){
+ if(!confirm('ลบ '+name+' ออกจากรายชื่อหรือไม่?'))return;
+ const {error}=await sb.from('students').update({is_active:false}).eq('id',id);
+ if(error)return alert('ลบไม่สำเร็จ: '+error.message); await loadRoom();
+}
+async function render(){
+ studentCount.textContent=students.length;
+ if(!students.length){attemptCount.textContent='0';avgScore.textContent='-';rows.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px">ยังไม่มีรายชื่อนักเรียน</td></tr>';return}
+ const ids=students.map(s=>s.id);
+ const {data:ats,error}=await sb.from('attempts').select('student_id,score,attempted_at').in('student_id',ids).order('attempted_at',{ascending:false});
+ const attempts=error?[]:(ats||[]);
+ attemptCount.textContent=attempts.length;
+ avgScore.textContent=attempts.length?(attempts.reduce((a,x)=>a+Number(x.score),0)/attempts.length).toFixed(1):'-';
+ const stats={};
+ for(const a of attempts){if(!stats[a.student_id])stats[a.student_id]={count:0,sum:0,last:a.score,date:a.attempted_at};stats[a.student_id].count++;stats[a.student_id].sum+=Number(a.score)}
+ rows.innerHTML=students.map(s=>{const x=stats[s.id];return `<tr><td>${esc(s.student_no||'-')}</td><td>${esc(s.full_name)}</td><td>${gradeThai(currentClass.grade_level)}</td><td>${x?x.count:0}</td><td>${x?x.last:'-'}</td><td>${x?(x.sum/x.count).toFixed(1):'-'}</td><td>${x?new Date(x.date).toLocaleString('th-TH'):'-'}</td><td><button class="light" onclick='editStudent(${s.id},${JSON.stringify(s.student_no||'')},${JSON.stringify(s.full_name)})'>แก้ไข</button> <button class="danger" onclick='removeStudent(${s.id},${JSON.stringify(s.full_name)})'>ลบ</button></td></tr>`}).join('');
+}
+sb.auth.onAuthStateChange((_e,session)=>showSession(session));
+init();
 </script>
 </body></html>
