@@ -72,13 +72,20 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 const PROJECT_URL='https://zbmrjexpugcwawvmrtyo.supabase.co';
 const PUBLISHABLE_KEY='sb_publishable_E7iFH6DFoonjDt5WdSYbSQ_HGTB8pbY';
 const sb=supabase.createClient(PROJECT_URL,PUBLISHABLE_KEY);
+const loginEl=document.getElementById('login'),appEl=document.getElementById('app'),whoEl=document.getElementById('who'),
+loginMsgEl=document.getElementById('loginMsg'),emailEl=document.getElementById('email'),passwordEl=document.getElementById('password'),
+gradeEl=document.getElementById('grade'),yearEl=document.getElementById('year'),termEl=document.getElementById('term'),
+statusEl=document.getElementById('status'),createRoomBtnEl=document.getElementById('createRoomBtn'),
+studentCountEl=document.getElementById('studentCount'),completeCountEl=document.getElementById('completeCount'),
+classTotalAvgEl=document.getElementById('classTotalAvg'),attemptCountEl=document.getElementById('attemptCount'),
+studentNoEl=document.getElementById('studentNo'),studentNameEl=document.getElementById('studentName'),rowsEl=document.getElementById('rows');
 let currentClass=null, students=[];
 
 function gradeThai(g){return ({P4:'ป.4',P5:'ป.5',P6:'ป.6',M1:'ม.1',M2:'ม.2',M3:'ม.3'})[g]||g}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])}
 function beToCe(v){const y=Number(v);return y>=2400?y-543:y}
 function ceToBe(v){const y=Number(v);return y<2400?y+543:y}
-function populateYears(){const nowBE=new Date().getFullYear()+543;year.innerHTML='';for(let y=nowBE-3;y<=nowBE+8;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===nowBE)o.selected=true;year.appendChild(o)}}
+function populateYears(){const nowBE=new Date().getFullYear()+543;yearEl.innerHTML='';for(let y=nowBE-3;y<=nowBE+8;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===nowBE)o.selected=true;yearEl.appendChild(o)}}
 function parseFeedback(raw){try{return JSON.parse(raw||'{}')}catch(_){return {}}}
 
 async function init(){
@@ -87,46 +94,50 @@ async function init(){
  showSession(session);
 }
 function showSession(session){
- if(session){login.style.display='none';app.style.display='block';who.textContent='เข้าสู่ระบบ: '+session.user.email;loadRoom();}
- else{login.style.display='block';app.style.display='none';}
+ if(session){loginEl.style.display='none';appEl.style.display='block';whoEl.textContent='เข้าสู่ระบบ: '+session.user.email;loadRoom();}
+ else{loginEl.style.display='block';appEl.style.display='none';}
 }
 async function signIn(){
- loginMsg.textContent='กำลังเข้าสู่ระบบ...';
- const {data,error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});
- if(error){loginMsg.textContent='เข้าสู่ระบบไม่สำเร็จ: '+error.message;return}
- password.value='';showSession(data.session);
+ loginMsgEl.textContent='กำลังเข้าสู่ระบบ...';
+ try{
+   const {data,error}=await sb.auth.signInWithPassword({email:emailEl.value.trim(),password:passwordEl.value});
+   if(error){loginMsgEl.textContent='เข้าสู่ระบบไม่สำเร็จ: '+error.message;return}
+   passwordEl.value='';showSession(data.session);
+ }catch(err){
+   loginMsgEl.textContent='เข้าสู่ระบบไม่สำเร็จ: '+(err?.message||'เกิดข้อผิดพลาด กรุณาลองใหม่');
+ }
 }
 async function signOut(){await sb.auth.signOut();showSession(null)}
 
 async function loadRoom(){
- status.textContent='กำลังโหลดข้อมูล...'; createRoomBtn.style.display='none';
- const academicYear=beToCe(year.value);
- const {data:cls,error}=await sb.from('school_classes').select('*').eq('grade_level',grade.value).eq('academic_year',academicYear).eq('term',+term.value).maybeSingle();
- if(error){status.textContent='โหลดห้องไม่สำเร็จ: '+error.message;return}
+ statusEl.textContent='กำลังโหลดข้อมูล...'; createRoomBtnEl.style.display='none';
+ const academicYear=beToCe(yearEl.value);
+ const {data:cls,error}=await sb.from('school_classes').select('*').eq('grade_level',gradeEl.value).eq('academic_year',academicYear).eq('term',+termEl.value).maybeSingle();
+ if(error){statusEl.textContent='โหลดห้องไม่สำเร็จ: '+error.message;return}
  if(!cls){
    currentClass=null;students=[];
-   status.textContent=`ยังไม่มีห้อง ${gradeThai(grade.value)} ปีการศึกษา ${year.value} ภาคเรียน ${term.value}`;
-   createRoomBtn.style.display='inline-block';renderEmpty();return
+   statusEl.textContent=`ยังไม่มีห้อง ${gradeThai(gradeEl.value)} ปีการศึกษา ${yearEl.value} ภาคเรียน ${termEl.value}`;
+   createRoomBtnEl.style.display='inline-block';renderEmpty();return
  }
  currentClass=cls;
  const {data:stu,error:se}=await sb.from('students').select('*').eq('class_id',cls.id).eq('is_active',true).order('student_no');
- if(se){status.textContent='โหลดรายชื่อไม่สำเร็จ: '+se.message;return}
+ if(se){statusEl.textContent='โหลดรายชื่อไม่สำเร็จ: '+se.message;return}
  students=stu||[];
- status.textContent=`${gradeThai(cls.grade_level)} • ปีการศึกษา ${ceToBe(cls.academic_year)} • ภาคเรียน ${cls.term}`;
+ statusEl.textContent=`${gradeThai(cls.grade_level)} • ปีการศึกษา ${ceToBe(cls.academic_year)} • ภาคเรียน ${cls.term}`;
  await render();
 }
 async function createRoom(){
- const payload={grade_level:grade.value,academic_year:beToCe(year.value),term:+term.value,is_active:true};
+ const payload={grade_level:gradeEl.value,academic_year:beToCe(yearEl.value),term:+termEl.value,is_active:true};
  const {error}=await sb.from('school_classes').insert(payload);
  if(error){alert('สร้างห้องไม่สำเร็จ: '+error.message);return}
  await loadRoom();
 }
 async function addStudent(){
  if(!currentClass)return alert('กรุณาเปิดหรือสร้างห้องก่อน');
- const n=studentName.value.trim(); if(!n)return alert('กรุณากรอกชื่อ-สกุล');
- const {error}=await sb.from('students').insert({student_no:studentNo.value.trim()||null,full_name:n,class_id:currentClass.id,is_active:true});
+ const n=studentNameEl.value.trim(); if(!n)return alert('กรุณากรอกชื่อ-สกุล');
+ const {error}=await sb.from('students').insert({student_no:studentNoEl.value.trim()||null,full_name:n,class_id:currentClass.id,is_active:true});
  if(error)return alert('บันทึกไม่สำเร็จ: '+error.message);
- studentNo.value='';studentName.value='';await loadRoom();
+ studentNoEl.value='';studentNameEl.value='';await loadRoom();
 }
 async function editStudent(id,no,name){
  const newNo=prompt('เลขที่/รหัสนักเรียน',no||''); if(newNo===null)return;
@@ -140,17 +151,17 @@ async function removeStudent(id,name){
  if(error)return alert('ลบไม่สำเร็จ: '+error.message); await loadRoom();
 }
 function renderEmpty(){
- studentCount.textContent='0';completeCount.textContent='0';classTotalAvg.textContent='-';attemptCount.textContent='0';
- rows.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px">ยังไม่มีข้อมูล</td></tr>';
+ studentCountEl.textContent='0';completeCountEl.textContent='0';classTotalAvgEl.textContent='-';attemptCountEl.textContent='0';
+ rowsEl.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px">ยังไม่มีข้อมูล</td></tr>';
 }
 
 async function render(){
- studentCount.textContent=students.length;
+ studentCountEl.textContent=students.length;
  if(!students.length){renderEmpty();return}
  const ids=students.map(s=>s.id);
  const {data:ats,error}=await sb.from('attempts').select('student_id,score,feedback,attempted_at').in('student_id',ids).order('attempted_at',{ascending:false});
  const attempts=error?[]:(ats||[]);
- attemptCount.textContent=attempts.length;
+ attemptCountEl.textContent=attempts.length;
 
  let complete=0, classTotals=[];
  const studentRows=students.map(s=>{
@@ -172,10 +183,10 @@ async function render(){
    if(entries.length>=5){complete++;classTotals.push(total)}
    return {s,entries,total,avg,latest};
  });
- completeCount.textContent=complete;
- classTotalAvg.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
+ completeCountEl.textContent=complete;
+ classTotalAvgEl.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
 
- rows.innerHTML=studentRows.map(r=>{
+ rowsEl.innerHTML=studentRows.map(r=>{
    const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong></span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
    const done=Math.min(r.entries.length,5);
    const progressClass=done>=5?'complete':'incomplete';
