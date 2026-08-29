@@ -39,7 +39,7 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <div class="field"><b>ชั้น</b><select id="grade"><option value="P1">ป.1</option><option value="P2">ป.2</option><option value="P3">ป.3</option><option value="P4">ป.4</option><option value="P5">ป.5</option><option value="P6">ป.6</option><option value="M1">ม.1</option><option value="M2">ม.2</option><option value="M3">ม.3</option></select></div>
 <div class="field"><b>ปีการศึกษา พ.ศ.</b><select id="year"></select></div>
 <div class="field"><b>ภาคเรียน</b><select id="term"><option value="1">1</option><option value="2">2</option></select></div>
-<div class="field"><b>กิจกรรม</b><select id="activityFilter" onchange="render()"><option value="conversation">Conversation Stations</option><option value="speaking_out_loud">Speaking Out Loud</option></select></div>
+<div class="field"><b>กิจกรรม</b><select id="activityFilter" onchange="render()"><option value="conversation">Conversation Stations</option><option value="speaking_out_loud">Speaking Out Loud</option><option value="reading">Reading Part</option></select></div>
 <button class="primary" onclick="loadRoom()">เปิดห้อง</button>
 <button class="gold" id="createRoomBtn" onclick="createRoom()" style="display:none">+ สร้างห้องนี้</button>
 </div>
@@ -172,8 +172,8 @@ async function render(){
    mine.forEach(a=>{
      const f=parseFeedback(a.feedback);
      if(f.grade!==currentClass.grade_level || Number(f.term)!==Number(currentClass.term) || (f.academic_year_be && Number(f.academic_year_be)!==Number(yearEl.value)) || !f.lesson_title)return;
-     const isSOL=f.activity_type==='speaking_out_loud';
-     if(activityFilterEl.value==='speaking_out_loud'?!isSOL:isSOL)return;
+     const activityType=f.activity_type==='speaking_out_loud'?'speaking_out_loud':f.activity_type==='reading'?'reading':'conversation';
+     if(activityFilterEl.value!==activityType)return;
      const key=f.lesson_title, score=Number(a.score)||0;
      const prev=best.get(key);
      if(!prev || score>prev.score)best.set(key,{score,at:a.attempted_at,feedback:f});
@@ -190,7 +190,7 @@ async function render(){
  classTotalAvgEl.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
 
  rowsEl.innerHTML=studentRows.map(r=>{
-   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
+   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:activityFilterEl.value==='reading'?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/${v.feedback.total_questions??'-'}</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
    const done=Math.min(r.entries.length,5);
    const progressClass=done>=5?'complete':'incomplete';
    return `<tr>
@@ -205,6 +205,8 @@ async function render(){
    </tr>`;
  }).join('');
 }
+const requestedActivity=new URLSearchParams(location.search).get('from');
+if(requestedActivity==='reading'||requestedActivity==='speaking_out_loud')activityFilterEl.value=requestedActivity;
 sb.auth.onAuthStateChange((_e,session)=>showSession(session));
 init();
 </script>
