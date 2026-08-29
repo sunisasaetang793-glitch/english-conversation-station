@@ -39,14 +39,15 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <div class="field"><b>ชั้น</b><select id="grade"><option value="P1">ป.1</option><option value="P2">ป.2</option><option value="P3">ป.3</option><option value="P4">ป.4</option><option value="P5">ป.5</option><option value="P6">ป.6</option><option value="M1">ม.1</option><option value="M2">ม.2</option><option value="M3">ม.3</option></select></div>
 <div class="field"><b>ปีการศึกษา พ.ศ.</b><select id="year"></select></div>
 <div class="field"><b>ภาคเรียน</b><select id="term"><option value="1">1</option><option value="2">2</option></select></div>
+<div class="field"><b>กิจกรรม</b><select id="activityFilter" onchange="render()"><option value="conversation">Conversation Stations</option><option value="speaking_out_loud">Speaking Out Loud</option></select></div>
 <button class="primary" onclick="loadRoom()">เปิดห้อง</button>
 <button class="gold" id="createRoomBtn" onclick="createRoom()" style="display:none">+ สร้างห้องนี้</button>
 </div>
 <div id="status" class="msg"></div>
 <div class="cards">
 <div class="card">นักเรียนทั้งหมด<b id="studentCount">0</b></div>
-<div class="card">ทำครบ 5 สถานการณ์<b id="completeCount">0</b></div>
-<div class="card">คะแนนเฉลี่ย /50<b id="classTotalAvg">-</b></div>
+<div class="card">ทำครบอย่างน้อย 5 บท<b id="completeCount">0</b></div>
+<div class="card">คะแนนเฉลี่ย 5 บท /50<b id="classTotalAvg">-</b></div>
 <div class="card">จำนวนครั้งที่ฝึก<b id="attemptCount">0</b></div>
 </div>
 <h3>เพิ่มนักเรียน</h3>
@@ -59,7 +60,7 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 
 <section class="panel">
 <h2>คะแนนรายคน</h2>
-<p class="small">แสดงคะแนนที่ดีที่สุดของแต่ละสถานการณ์ สถานการณ์เดิมทำซ้ำจะไม่เพิ่มจำนวน แต่จะเก็บคะแนนที่ดีที่สุด และรวม 5 สถานการณ์แรกที่ดีที่สุดเป็นคะแนนเต็ม 50</p>
+<p class="small">เลือกประเภทกิจกรรมด้านบน ระบบจะแสดงคะแนนที่ดีที่สุดของแต่ละบท บทเดิมทำซ้ำจะไม่เพิ่มจำนวน และจะเก็บคะแนนที่ดีที่สุดไว้</p>
 <div class="tablewrap"><table>
 <thead><tr><th>ลำดับ</th><th>ชื่อ-สกุล</th><th>คะแนนแต่ละสถานการณ์</th><th>ความก้าวหน้า</th><th>รวม /50</th><th>เฉลี่ย</th><th>ล่าสุด</th><th>จัดการ</th></tr></thead>
 <tbody id="rows"></tbody></table></div>
@@ -75,7 +76,7 @@ const sb=supabase.createClient(PROJECT_URL,PUBLISHABLE_KEY);
 const loginEl=document.getElementById('login'),appEl=document.getElementById('app'),whoEl=document.getElementById('who'),
 loginMsgEl=document.getElementById('loginMsg'),emailEl=document.getElementById('email'),passwordEl=document.getElementById('password'),
 gradeEl=document.getElementById('grade'),yearEl=document.getElementById('year'),termEl=document.getElementById('term'),
-statusEl=document.getElementById('status'),createRoomBtnEl=document.getElementById('createRoomBtn'),
+statusEl=document.getElementById('status'),createRoomBtnEl=document.getElementById('createRoomBtn'),activityFilterEl=document.getElementById('activityFilter'),
 studentCountEl=document.getElementById('studentCount'),completeCountEl=document.getElementById('completeCount'),
 classTotalAvgEl=document.getElementById('classTotalAvg'),attemptCountEl=document.getElementById('attemptCount'),
 studentNoEl=document.getElementById('studentNo'),studentNameEl=document.getElementById('studentName'),rowsEl=document.getElementById('rows');
@@ -171,9 +172,11 @@ async function render(){
    mine.forEach(a=>{
      const f=parseFeedback(a.feedback);
      if(f.grade!==currentClass.grade_level || Number(f.term)!==Number(currentClass.term) || (f.academic_year_be && Number(f.academic_year_be)!==Number(yearEl.value)) || !f.lesson_title)return;
+     const isSOL=f.activity_type==='speaking_out_loud';
+     if(activityFilterEl.value==='speaking_out_loud'?!isSOL:isSOL)return;
      const key=f.lesson_title, score=Number(a.score)||0;
      const prev=best.get(key);
-     if(!prev || score>prev.score)best.set(key,{score,at:a.attempted_at});
+     if(!prev || score>prev.score)best.set(key,{score,at:a.attempted_at,feedback:f});
      if(!latest || new Date(a.attempted_at)>new Date(latest))latest=a.attempted_at;
    });
    const entries=[...best.entries()].sort((a,b)=>b[1].score-a[1].score);
@@ -187,7 +190,7 @@ async function render(){
  classTotalAvgEl.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
 
  rowsEl.innerHTML=studentRows.map(r=>{
-   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong></span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
+   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ประโยค ${v.feedback.sentence_score??'-'}/10</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
    const done=Math.min(r.entries.length,5);
    const progressClass=done>=5?'complete':'incomplete';
    return `<tr>
