@@ -78,6 +78,19 @@
   #ivsaa-app .hero aside.panel{background:rgba(255,255,255,.70);backdrop-filter:blur(5px)}
   #ivsaa-app .hero .panel{min-height:70vh;display:flex;flex-direction:column;justify-content:center}
   @media(max-width:760px){#ivsaa-app .hero{width:calc(100vw - 12px);min-height:auto;padding:12px;background-position:52% center}.hero .panel{min-height:auto!important}#ivsaa-app .hero .panel:first-child,#ivsaa-app .hero aside.panel{background:rgba(255,255,255,.76)}}
+  /* Illustrated glass panels throughout Conversation */
+  #ivsaa-app .panel,#ivsaa-app .student-gate,#ivsaa-app .scenario{
+    background-image:linear-gradient(135deg,rgba(255,255,255,.79),rgba(235,247,255,.70),rgba(255,245,220,.68)),url('assets/english-world-hero-v2.png');
+    background-size:cover;background-position:center;background-repeat:no-repeat;
+    border:1px solid rgba(255,255,255,.88);box-shadow:0 12px 32px rgba(23,59,103,.14);backdrop-filter:blur(4px)
+  }
+  #ivsaa-app .student-gate{background-position:35% center}
+  #ivsaa-app .scenario{background-image:linear-gradient(145deg,rgba(255,255,255,.84),rgba(229,244,255,.70)),url('assets/english-world-hero-v2.png');background-position:70% center}
+  #ivsaa-app h1,#ivsaa-app h2,#ivsaa-app h3{font-weight:900;text-shadow:0 2px 0 rgba(255,255,255,.95),0 5px 14px rgba(23,59,103,.20)}
+  #ivsaa-app p,#ivsaa-app label{font-weight:520;text-shadow:0 1px 5px rgba(255,255,255,.96)}
+  #ivsaa-app input,#ivsaa-app select,#ivsaa-app .student-status,#ivsaa-app .metric,#ivsaa-app .bubble{background-color:rgba(255,255,255,.84);backdrop-filter:blur(5px)}
+  #ivsaa-app .hero .panel:first-child{background-image:linear-gradient(110deg,rgba(255,255,255,.72),rgba(235,247,255,.54),rgba(255,244,218,.47)),url('assets/english-world-hero-v2.png');background-size:cover;background-position:center}
+  #ivsaa-app .hero aside.panel{background-image:linear-gradient(145deg,rgba(255,255,255,.76),rgba(238,248,255,.66)),url('assets/english-world-hero-v2.png');background-size:cover;background-position:80% center}
   </style>
   <div class="wrap">
     <div class="hero">
