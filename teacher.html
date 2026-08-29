@@ -190,7 +190,7 @@ async function render(){
  classTotalAvgEl.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
 
  rowsEl.innerHTML=studentRows.map(r=>{
-   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ประโยค ${v.feedback.sentence_score??'-'}/10</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
+   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
    const done=Math.min(r.entries.length,5);
    const progressClass=done>=5?'complete':'incomplete';
    return `<tr>
