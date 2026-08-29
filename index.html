@@ -62,6 +62,22 @@
   #ivsaa-app .station-cover{width:100%;aspect-ratio:2/1;border-radius:20px;margin-bottom:18px;background-image:url('assets/conversation-scenes-sprite.png');background-size:500% 300%;background-repeat:no-repeat;background-color:#eaf4f8;box-shadow:0 12px 28px rgba(23,59,103,.18);border:3px solid rgba(255,255,255,.9)}
   #ivsaa-app #chatPanel{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(238,248,255,.96))}
   @media(max-width:760px){#ivsaa-app .hero{padding:10px;background-position:45% center}#ivsaa-app .hero .panel{background:rgba(255,255,255,.88)}}
+  /* Full-screen cinematic landing cover */
+  #ivsaa-app .hero{
+    width:calc(100vw - 32px);
+    min-height:calc(100vh - 48px);
+    margin-left:50%;
+    transform:translateX(-50%);
+    padding:clamp(20px,3vw,48px);
+    align-items:center;
+    background-image:linear-gradient(90deg,rgba(229,244,255,.48) 0%,rgba(255,255,255,.24) 48%,rgba(255,244,219,.35) 100%),url('assets/english-world-hero-v2.png');
+    background-position:center;
+    background-size:cover;
+  }
+  #ivsaa-app .hero .panel:first-child{background:linear-gradient(110deg,rgba(255,255,255,.77),rgba(235,247,255,.58),rgba(255,244,218,.50));backdrop-filter:blur(3px)}
+  #ivsaa-app .hero aside.panel{background:rgba(255,255,255,.70);backdrop-filter:blur(5px)}
+  #ivsaa-app .hero .panel{min-height:70vh;display:flex;flex-direction:column;justify-content:center}
+  @media(max-width:760px){#ivsaa-app .hero{width:calc(100vw - 12px);min-height:auto;padding:12px;background-position:52% center}.hero .panel{min-height:auto!important}#ivsaa-app .hero .panel:first-child,#ivsaa-app .hero aside.panel{background:rgba(255,255,255,.76)}}
   </style>
   <div class="wrap">
     <div class="hero">
