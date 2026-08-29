@@ -15,7 +15,7 @@ input,select{padding:11px;border:1px solid #cbd8e6;border-radius:10px;font-size:
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}.card{background:#eaf5ff;padding:15px;border-radius:14px}.card b{display:block;font-size:26px}
 table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;border-bottom:1px solid #e5edf5;text-align:left;vertical-align:top}th{background:#f4f8fc}.tablewrap{overflow:auto}
 #app{display:none}.msg{padding:10px;border-radius:10px;margin:10px 0;background:#f5f8fb}.login{max-width:470px;margin:35px auto}a{color:#2467a8}
-.score-pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef7f1;margin:2px 4px 2px 0;font-size:13px}.complete{background:#e3f7ea}.incomplete{background:#fff4d8}
+.score-pill{display:inline-block;padding:5px 8px;border-radius:12px;background:#eef7f1;margin:3px 4px 3px 0;font-size:13px}.score-pill small{display:block;margin-top:3px}.edit-score-btn{border:0;border-radius:9px;background:#fff;color:#145b38;font-weight:800;padding:4px 7px;margin-left:6px;cursor:pointer;box-shadow:0 2px 7px rgba(31,106,69,.14)}.teacher-adjusted{display:inline-block;margin-left:5px;color:#8a4b08;font-weight:800}.complete{background:#e3f7ea}.incomplete{background:#fff4d8}
 .small{font-size:13px;color:#60758b}.student-name{font-weight:700}
 @media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:480px){.cards{grid-template-columns:1fr}}
 </style>
@@ -146,6 +146,34 @@ async function editStudent(id,no,name){
  const {error}=await sb.from('students').update({student_no:newNo.trim()||null,full_name:newName.trim()}).eq('id',id);
  if(error)return alert('แก้ไขไม่สำเร็จ: '+error.message); await loadRoom();
 }
+function activityOf(f){return f.activity_type==='speaking_out_loud'?'speaking_out_loud':f.activity_type==='reading'?'reading':'conversation'}
+function sameLesson(a,b){
+ return activityOf(a)===activityOf(b) && a.lesson_title===b.lesson_title && a.grade===b.grade &&
+ Number(a.term)===Number(b.term) && Number(a.academic_year_be||0)===Number(b.academic_year_be||0);
+}
+async function editScore(id,currentScore,lessonName){
+ const value=prompt(`แก้ไขคะแนน “${lessonName}” (0–10)`,currentScore);
+ if(value===null)return;
+ const newScore=Number(value);
+ if(!Number.isFinite(newScore)||newScore<0||newScore>10)return alert('กรุณากรอกคะแนนตั้งแต่ 0 ถึง 10');
+ const {data:target,error:targetError}=await sb.from('attempts').select('id,student_id,score,feedback').eq('id',id).single();
+ if(targetError||!target)return alert('อ่านข้อมูลคะแนนไม่สำเร็จ: '+(targetError?.message||'ไม่พบคะแนน'));
+ const targetFeedback=parseFeedback(target.feedback);
+ const {data:all,error:allError}=await sb.from('attempts').select('id,score,feedback').eq('student_id',target.student_id);
+ if(allError)return alert('อ่านประวัติคะแนนไม่สำเร็จ: '+allError.message);
+ const matching=(all||[]).filter(a=>sameLesson(parseFeedback(a.feedback),targetFeedback));
+ const changedAt=new Date().toISOString();
+ const results=await Promise.all(matching.map(a=>{
+   const f=parseFeedback(a.feedback);
+   if(f.original_score==null)f.original_score=Number(a.score)||0;
+   f.score_out_of_10=newScore;f.teacher_adjusted_score=newScore;f.teacher_adjusted=true;f.teacher_adjusted_at=changedAt;
+   return sb.from('attempts').update({score:newScore,feedback:JSON.stringify(f)}).eq('id',a.id);
+ }));
+ const failed=results.find(r=>r.error);
+ if(failed)return alert('แก้ไขคะแนนไม่สำเร็จ: '+failed.error.message);
+ alert(`แก้ไขคะแนน “${lessonName}” เป็น ${newScore}/10 เรียบร้อยแล้ว`);
+ await render();
+}
 async function removeStudent(id,name){
  if(!confirm('ลบ '+name+' ออกจากรายชื่อหรือไม่?'))return;
  const {error}=await sb.from('students').update({is_active:false}).eq('id',id);
@@ -160,7 +188,7 @@ async function render(){
  studentCountEl.textContent=students.length;
  if(!students.length){renderEmpty();return}
  const ids=students.map(s=>s.id);
- const {data:ats,error}=await sb.from('attempts').select('student_id,score,feedback,attempted_at').in('student_id',ids).order('attempted_at',{ascending:false});
+ const {data:ats,error}=await sb.from('attempts').select('id,student_id,score,feedback,attempted_at').in('student_id',ids).order('attempted_at',{ascending:false});
  const attempts=error?[]:(ats||[]);
  attemptCountEl.textContent=attempts.length;
 
@@ -176,7 +204,7 @@ async function render(){
      if(activityFilterEl.value!==activityType)return;
      const key=f.lesson_title, score=Number(a.score)||0;
      const prev=best.get(key);
-     if(!prev || score>prev.score)best.set(key,{score,at:a.attempted_at,feedback:f});
+     if(!prev || score>prev.score)best.set(key,{id:a.id,score,at:a.attempted_at,feedback:f});
      if(!latest || new Date(a.attempted_at)>new Date(latest))latest=a.attempted_at;
    });
    const entries=[...best.entries()].sort((a,b)=>b[1].score-a[1].score);
@@ -190,7 +218,7 @@ async function render(){
  classTotalAvgEl.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
 
  rowsEl.innerHTML=studentRows.map(r=>{
-   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:activityFilterEl.value==='reading'?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/${v.feedback.total_questions??'-'}</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
+   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${v.feedback.teacher_adjusted?'<span class="teacher-adjusted">ครูปรับแล้ว</span>':''}<button class="edit-score-btn" onclick="editScore(${v.id},${v.score},decodeURIComponent('${encodeURIComponent(name)}'))">แก้คะแนน</button>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:activityFilterEl.value==='reading'?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/${v.feedback.total_questions??'-'}</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
    const done=Math.min(r.entries.length,5);
    const progressClass=done>=5?'complete':'incomplete';
    return `<tr>
@@ -201,7 +229,7 @@ async function render(){
    <td><strong>${r.total}/50</strong></td>
    <td>${r.avg}</td>
    <td>${r.latest?new Date(r.latest).toLocaleString('th-TH'):'-'}</td>
-   <td><button class="light" onclick='editStudent(${r.s.id},${JSON.stringify(r.s.student_no||'')},${JSON.stringify(r.s.full_name)})'>แก้ไข</button> <button class="danger" onclick='removeStudent(${r.s.id},${JSON.stringify(r.s.full_name)})'>ลบ</button></td>
+   <td><button class="light" onclick='editStudent(${r.s.id},${JSON.stringify(r.s.student_no||'')},${JSON.stringify(r.s.full_name)})'>แก้ไขชื่อ</button> <button class="danger" onclick='removeStudent(${r.s.id},${JSON.stringify(r.s.full_name)})'>ลบ</button></td>
    </tr>`;
  }).join('');
 }
