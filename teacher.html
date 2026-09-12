@@ -40,7 +40,7 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <div class="field"><b>ชั้น</b><select id="grade"><option value="P1">ป.1</option><option value="P2">ป.2</option><option value="P3">ป.3</option><option value="P4">ป.4</option><option value="P5">ป.5</option><option value="P6">ป.6</option><option value="M1">ม.1</option><option value="M2">ม.2</option><option value="M3">ม.3</option></select></div>
 <div class="field"><b>ปีการศึกษา พ.ศ.</b><select id="year"></select></div>
 <div class="field"><b>ภาคเรียน</b><select id="term"><option value="1">1</option><option value="2">2</option></select></div>
-<div class="field"><b>กิจกรรม</b><select id="activityFilter" onchange="render()"><option value="conversation">Conversation Stations</option><option value="speaking_out_loud">Speaking Out Loud</option><option value="reading">Reading Part</option><option value="picture_talk">Picture Talk Challenge</option><option value="listen_choose">Listen and Choose</option><option value="who_am_i">Who Am I?</option></select></div>
+<div class="field"><b>กิจกรรม</b><select id="activityFilter" onchange="render()"><option value="conversation">Conversation Stations</option><option value="speaking_out_loud">Speaking Out Loud</option><option value="reading">Reading Part</option><option value="picture_talk">Picture Talk Challenge</option><option value="listen_choose">Listen and Choose</option><option value="who_am_i">Who Am I?</option><option value="midterm_exam">Midterm Examination</option><option value="final_exam">Final Examination</option></select></div>
 <button class="primary" onclick="loadRoom()">เปิดห้อง</button>
 <button class="gold" id="createRoomBtn" onclick="createRoom()" style="display:none">+ สร้างห้องนี้</button>
 <button class="green" onclick="showAnswerKey()">🔑 Answer Key</button>
@@ -48,8 +48,8 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <div id="status" class="msg"></div>
 <div class="cards">
 <div class="card">นักเรียนทั้งหมด<b id="studentCount">0</b></div>
-<div class="card">ทำครบอย่างน้อย 5 บท<b id="completeCount">0</b></div>
-<div class="card">คะแนนเฉลี่ย 5 บท /50<b id="classTotalAvg">-</b></div>
+<div class="card"><span id="completeLabel">ทำครบอย่างน้อย 5 บท</span><b id="completeCount">0</b></div>
+<div class="card"><span id="averageLabel">คะแนนเฉลี่ย 5 บท /50</span><b id="classTotalAvg">-</b></div>
 <div class="card">จำนวนครั้งที่ฝึก<b id="attemptCount">0</b></div>
 </div>
 <h3>เพิ่มนักเรียน</h3>
@@ -64,7 +64,7 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <h2>คะแนนรายคน</h2>
 <p class="small">เลือกประเภทกิจกรรมด้านบน ระบบจะแสดงคะแนนที่ดีที่สุดของแต่ละบท บทเดิมทำซ้ำจะไม่เพิ่มจำนวน และจะเก็บคะแนนที่ดีที่สุดไว้</p>
 <div class="tablewrap"><table>
-<thead><tr><th>ลำดับ</th><th>ชื่อ-สกุล</th><th>คะแนนแต่ละสถานการณ์</th><th>ความก้าวหน้า</th><th>รวม /50</th><th>เฉลี่ย</th><th>ล่าสุด</th><th>จัดการ</th></tr></thead>
+<thead><tr><th>ลำดับ</th><th>ชื่อ-สกุล</th><th>คะแนนแต่ละสถานการณ์</th><th>ความก้าวหน้า</th><th id="totalHeader">รวม /50</th><th>เฉลี่ย</th><th>ล่าสุด</th><th>จัดการ</th></tr></thead>
 <tbody id="rows"></tbody></table></div>
 </section>
 
@@ -161,19 +161,20 @@ async function editStudent(id,no,name){
  const {error}=await sb.from('students').update({student_no:newNo.trim()||null,full_name:newName.trim()}).eq('id',id);
  if(error)return alert('แก้ไขไม่สำเร็จ: '+error.message); await loadRoom();
 }
-function activityOf(f){return ['speaking_out_loud','reading','picture_talk','listen_choose','who_am_i'].includes(f.activity_type)?f.activity_type:'conversation'}
+function activityOf(f){return ['speaking_out_loud','reading','picture_talk','listen_choose','who_am_i','midterm_exam','final_exam'].includes(f.activity_type)?f.activity_type:'conversation'}
 function sameLesson(a,b){
  return activityOf(a)===activityOf(b) && a.lesson_title===b.lesson_title && a.grade===b.grade &&
  Number(a.term)===Number(b.term) && Number(a.academic_year_be||0)===Number(b.academic_year_be||0);
 }
 async function editScore(id,currentScore,lessonName){
- const value=prompt(`แก้ไขคะแนน “${lessonName}” (0–10)`,currentScore);
- if(value===null)return;
- const newScore=Number(value);
- if(!Number.isFinite(newScore)||newScore<0||newScore>10)return alert('กรุณากรอกคะแนนตั้งแต่ 0 ถึง 10');
  const {data:target,error:targetError}=await sb.from('attempts').select('id,student_id,score,feedback').eq('id',id).single();
  if(targetError||!target)return alert('อ่านข้อมูลคะแนนไม่สำเร็จ: '+(targetError?.message||'ไม่พบคะแนน'));
  const targetFeedback=parseFeedback(target.feedback);
+ const maxScore=Number(targetFeedback.total_score)||10;
+ const value=prompt(`แก้ไขคะแนน “${lessonName}” (0–${maxScore})`,currentScore);
+ if(value===null)return;
+ const newScore=Number(value);
+ if(!Number.isFinite(newScore)||newScore<0||newScore>maxScore)return alert(`กรุณากรอกคะแนนตั้งแต่ 0 ถึง ${maxScore}`);
  const {data:all,error:allError}=await sb.from('attempts').select('id,score,feedback').eq('student_id',target.student_id);
  if(allError)return alert('อ่านประวัติคะแนนไม่สำเร็จ: '+allError.message);
  const matching=(all||[]).filter(a=>sameLesson(parseFeedback(a.feedback),targetFeedback));
@@ -181,12 +182,12 @@ async function editScore(id,currentScore,lessonName){
  const results=await Promise.all(matching.map(a=>{
    const f=parseFeedback(a.feedback);
    if(f.original_score==null)f.original_score=Number(a.score)||0;
-   f.score_out_of_10=newScore;f.teacher_adjusted_score=newScore;f.teacher_adjusted=true;f.teacher_adjusted_at=changedAt;
+   if(maxScore===30)f.score_out_of_30=newScore;else f.score_out_of_10=newScore;f.teacher_adjusted_score=newScore;f.teacher_adjusted=true;f.teacher_adjusted_at=changedAt;
    return sb.from('attempts').update({score:newScore,feedback:JSON.stringify(f)}).eq('id',a.id);
  }));
  const failed=results.find(r=>r.error);
  if(failed)return alert('แก้ไขคะแนนไม่สำเร็จ: '+failed.error.message);
- alert(`แก้ไขคะแนน “${lessonName}” เป็น ${newScore}/10 เรียบร้อยแล้ว`);
+ alert(`แก้ไขคะแนน “${lessonName}” เป็น ${newScore}/${maxScore} เรียบร้อยแล้ว`);
  await render();
 }
 async function removeStudent(id,name){
@@ -206,6 +207,11 @@ async function render(){
  const {data:ats,error}=await sb.from('attempts').select('id,student_id,score,feedback,attempted_at').in('student_id',ids).order('attempted_at',{ascending:false});
  const attempts=error?[]:(ats||[]);
  attemptCountEl.textContent=attempts.length;
+ const isExam=activityFilterEl.value==='midterm_exam'||activityFilterEl.value==='final_exam';
+ const targetCount=isExam?1:5, itemMax=isExam?30:10, totalMax=targetCount*itemMax;
+ document.getElementById('completeLabel').textContent=isExam?'ส่งข้อสอบแล้ว':'ทำครบอย่างน้อย 5 บท';
+ document.getElementById('averageLabel').textContent=isExam?'คะแนนเฉลี่ยข้อสอบ /30':'คะแนนเฉลี่ย 5 บท /50';
+ document.getElementById('totalHeader').textContent=`รวม /${totalMax}`;
 
  let complete=0, classTotals=[];
  const studentRows=students.map((s,idx)=>{
@@ -223,25 +229,25 @@ async function render(){
      if(!latest || new Date(a.attempted_at)>new Date(latest))latest=a.attempted_at;
    });
    const entries=[...best.entries()].sort((a,b)=>b[1].score-a[1].score);
-   const top5=entries.slice(0,5);
+   const top5=entries.slice(0,targetCount);
    const total=top5.reduce((sum,x)=>sum+x[1].score,0);
    const avg=top5.length?(total/top5.length).toFixed(1):'-';
-   if(entries.length>=5){complete++;classTotals.push(total)}
+   if(entries.length>=targetCount){complete++;classTotals.push(total)}
    return {s,idx,entries,total,avg,latest};
  });
  completeCountEl.textContent=complete;
  classTotalAvgEl.textContent=classTotals.length?(classTotals.reduce((a,b)=>a+b,0)/classTotals.length).toFixed(1):'-';
 
  rowsEl.innerHTML=studentRows.map(r=>{
-   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/10</strong>${v.feedback.teacher_adjusted?'<span class="teacher-adjusted">ครูปรับแล้ว</span>':''}<button class="edit-score-btn" onclick="editScore(${v.id},${v.score},decodeURIComponent('${encodeURIComponent(name)}'))">แก้คะแนน</button>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:activityFilterEl.value==='reading'?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/${v.feedback.total_questions??'-'}</small>`:activityFilterEl.value==='picture_talk'?`<small> พบคำสำคัญ ${(v.feedback.keywords_found||[]).length}/10</small>`:(activityFilterEl.value==='listen_choose'||activityFilterEl.value==='who_am_i')?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/10</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
-   const done=Math.min(r.entries.length,5);
-   const progressClass=done>=5?'complete':'incomplete';
+   const pills=r.entries.length?r.entries.map(([name,v])=>`<span class="score-pill">${esc(name)} <strong>${v.score}/${v.feedback.total_score||10}</strong>${v.feedback.teacher_adjusted?'<span class="teacher-adjusted">ครูปรับแล้ว</span>':''}<button class="edit-score-btn" onclick="editScore(${v.id},${v.score},decodeURIComponent('${encodeURIComponent(name)}'))">แก้คะแนน</button>${activityFilterEl.value==='speaking_out_loud'?`<small> คำศัพท์ ${v.feedback.vocabulary_score??'-'}/10 • ${v.feedback.quiz_score!=null?`Quiz ${v.feedback.quiz_score}/10`:`ประโยค ${v.feedback.sentence_score??'-'}/10`}</small>`:activityFilterEl.value==='reading'?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/${v.feedback.total_questions??'-'}</small>`:activityFilterEl.value==='picture_talk'?`<small> พบคำสำคัญ ${(v.feedback.keywords_found||[]).length}/10</small>`:(activityFilterEl.value==='listen_choose'||activityFilterEl.value==='who_am_i')?`<small> ตอบถูก ${v.feedback.correct_answers??'-'}/10</small>`:isExam?`<small> ฟัง ${v.feedback.listening_score??'-'}/10 • สนทนา ${v.feedback.conversation_score??'-'}/10 • พูด ${v.feedback.speaking_score??'-'}/10</small>`:''}</span>`).join(''):'<span class="small">ยังไม่มีคะแนน</span>';
+   const done=Math.min(r.entries.length,targetCount);
+   const progressClass=done>=targetCount?'complete':'incomplete';
    return `<tr>
    <td>${r.idx+1}</td>
    <td><span class="student-name">${esc(r.s.full_name)}</span></td>
    <td>${pills}</td>
-   <td><span class="score-pill ${progressClass}">${done}/5</span></td>
-   <td><strong>${r.total}/50</strong></td>
+   <td><span class="score-pill ${progressClass}">${done}/${targetCount}</span></td>
+   <td><strong>${r.total}/${totalMax}</strong></td>
    <td>${r.avg}</td>
    <td>${r.latest?new Date(r.latest).toLocaleString('th-TH'):'-'}</td>
    <td><button class="light" onclick='editStudent(${r.s.id},${JSON.stringify(r.s.student_no||'')},${JSON.stringify(r.s.full_name)})'>แก้ไขชื่อ</button> <button class="danger" onclick='removeStudent(${r.s.id},${JSON.stringify(r.s.full_name)})'>ลบ</button></td>
@@ -249,7 +255,7 @@ async function render(){
  }).join('');
 }
 const requestedActivity=new URLSearchParams(location.search).get('from');
-if(['reading','speaking_out_loud','picture_talk','listen_choose','who_am_i'].includes(requestedActivity))activityFilterEl.value=requestedActivity;
+if(['reading','speaking_out_loud','picture_talk','listen_choose','who_am_i','midterm_exam','final_exam'].includes(requestedActivity))activityFilterEl.value=requestedActivity;
 sb.auth.onAuthStateChange((_e,session)=>showSession(session));
 renderAnswerKey();
 init();
