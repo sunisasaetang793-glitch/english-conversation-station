@@ -17,7 +17,8 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 #app{display:none}.msg{padding:10px;border-radius:10px;margin:10px 0;background:#f5f8fb}.login{max-width:470px;margin:35px auto}a{color:#2467a8}
 .score-pill{display:inline-block;padding:5px 8px;border-radius:12px;background:#eef7f1;margin:3px 4px 3px 0;font-size:13px}.score-pill small{display:block;margin-top:3px}.edit-score-btn{border:0;border-radius:9px;background:#fff;color:#145b38;font-weight:800;padding:4px 7px;margin-left:6px;cursor:pointer;box-shadow:0 2px 7px rgba(31,106,69,.14)}.teacher-adjusted{display:inline-block;margin-left:5px;color:#8a4b08;font-weight:800}.complete{background:#e3f7ea}.incomplete{background:#fff4d8}
 .small{font-size:13px;color:#60758b}.student-name{font-weight:700}
-@media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:480px){.cards{grid-template-columns:1fr}}
+.answer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.answer-card{border:1px solid #d5e3ee;border-radius:16px;overflow:hidden;background:linear-gradient(145deg,#fff,#f5faff);box-shadow:0 6px 18px #18315312}.answer-scene{height:180px;background-repeat:no-repeat;background-size:300% 500%;background-color:#e7f1f6}.answer-body{padding:15px}.answer-body h3{margin:3px 0 10px}.key-list{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.key-word{padding:6px 9px;border-radius:999px;background:#dcf5e6;color:#125d39;font-weight:800;font-size:14px}.sample-answer{background:#fff7d8;border-left:5px solid #efbd36;border-radius:10px;padding:10px 12px;line-height:1.55}.answer-note{background:#eaf5ff;border-radius:12px;padding:11px;margin-top:10px}
+@media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}.answer-grid{grid-template-columns:1fr}}@media(max-width:480px){.cards{grid-template-columns:1fr}.answer-scene{height:155px}}
 </style>
 </head>
 <body>
@@ -42,6 +43,7 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <div class="field"><b>กิจกรรม</b><select id="activityFilter" onchange="render()"><option value="conversation">Conversation Stations</option><option value="speaking_out_loud">Speaking Out Loud</option><option value="reading">Reading Part</option><option value="picture_talk">Picture Talk Challenge</option></select></div>
 <button class="primary" onclick="loadRoom()">เปิดห้อง</button>
 <button class="gold" id="createRoomBtn" onclick="createRoom()" style="display:none">+ สร้างห้องนี้</button>
+<button class="green" onclick="showAnswerKey()">🔑 Answer Key</button>
 </div>
 <div id="status" class="msg"></div>
 <div class="cards">
@@ -64,6 +66,12 @@ table{width:100%;border-collapse:collapse;min-width:980px}th,td{padding:10px;bor
 <div class="tablewrap"><table>
 <thead><tr><th>ลำดับ</th><th>ชื่อ-สกุล</th><th>คะแนนแต่ละสถานการณ์</th><th>ความก้าวหน้า</th><th>รวม /50</th><th>เฉลี่ย</th><th>ล่าสุด</th><th>จัดการ</th></tr></thead>
 <tbody id="rows"></tbody></table></div>
+</section>
+
+<section class="panel" id="answerKeyPanel">
+<div class="answer-head"><div><h2 style="margin:0">🔑 Answer Key — Picture Talk Challenge</h2><p class="small">เฉลยคำสำคัญตรงกับระบบตรวจคะแนน คำละ 1 คะแนน รวมภาพละ 10 คะแนน</p></div><div class="field"><b>เลือกชั้นเรียน</b><select id="answerKeyGrade" onchange="renderAnswerKey()"><option value="P4">ป.4</option><option value="P5">ป.5</option><option value="P6">ป.6</option><option value="M1">ม.1</option><option value="M2">ม.2</option><option value="M3">ม.3</option></select></div></div>
+<div class="answer-note"><strong>แนวทางตรวจ:</strong> นักเรียนไม่จำเป็นต้องพูดเหมือนประโยคตัวอย่าง ขอเพียงระบบฟังพบคำสำคัญในคำบรรยายก็ได้คำละ 1 คะแนน และยอมรับรูปคำใกล้เคียง เช่น <b>play / plays / playing</b></div>
+<div class="answer-grid" id="answerKeyGrid"></div>
 </section>
 <section class="panel"><a href="index.html">← กลับ English Conversation Station</a></section>
 </div>
@@ -88,6 +96,13 @@ function beToCe(v){const y=Number(v);return y>=2400?y-543:y}
 function ceToBe(v){const y=Number(v);return y<2400?y+543:y}
 function populateYears(){const nowBE=new Date().getFullYear()+543;yearEl.innerHTML='';for(let y=nowBE-3;y<=nowBE+8;y++){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===nowBE)o.selected=true;yearEl.appendChild(o)}}
 function parseFeedback(raw){try{return JSON.parse(raw||'{}')}catch(_){return {}}}
+const PT_NAMES=['Classroom Teamwork','Cooking Together','After-school Sports','Amazing Wildlife','At the Market','Picnic with Friends','Helping on the Farm','In the Library','A Day at the Beach','A Rainy Day','Birthday Celebration','Morning Routine','School Lunch','Garden Life','At the Shop'];
+const PT_KEYWORDS=[['teacher','student','classroom','book','desk','board','map','learn','sit','school'],['mother','children','kitchen','cook','salad','tomato','carrot','bowl','food','family'],['children','playground','slide','swing','run','play','happy','sunny','tree','friends'],['giraffe','elephant','zebra','zoo','animal','tree','big','tall','children','watch'],['market','fruit','banana','orange','pineapple','seller','student','buy','bag','colorful'],['family','park','picnic','dog','basket','food','tree','sit','happy','sunny'],['farm','cow','goat','chicken','grass','farmer','feed','fence','animal','barn'],['library','book','read','student','table','shelf','quiet','school','study','chair'],['beach','sand','sea','children','castle','bucket','sunny','play','island','umbrella'],['rain','umbrella','street','boots','coat','car','walk','wet','girl','flowers'],['birthday','cake','candle','gift','friends','party','happy','balloon','girl','celebrate'],['boy','bedroom','morning','bed','clock','window','wake','happy','bag','sun'],['student','canteen','lunch','rice','eat','table','friend','school','food','talk'],['garden','flower','butterfly','bee','ladybug','grasshopper','leaf','colorful','plant','sunny'],['shop','student','seller','bag','snack','buy','money','bottle','street','small']];
+const PT_SETS={P4:[0,1,2,3,4],P5:[5,6,7,8,9],P6:[10,11,12,13,14],M1:[0,3,4,6,7],M2:[1,2,5,8,10],M3:[9,11,12,13,14]};
+const PT_SAMPLES=['The teacher and students learn in the classroom. They sit at desks with books. A map is near the board.','A mother and her children cook food in the kitchen. They make salad with tomatoes and carrots in a bowl.','The children are happy at the sunny playground. They run and play on the slide and swing with friends near a tree.','The children watch tall animals at the zoo. They can see a big elephant, a giraffe and a zebra near the trees.','A student buys colorful fruit at the market. The seller has bananas, oranges and pineapples, and puts them in a bag.','A happy family has a picnic in the sunny park. They sit under a tree with food, a basket and their dog.','A farmer and a student feed animals on the farm. A cow, goat and chicken stand near the grass, fence and barn.','A student reads a book quietly at a table in the school library. There are chairs and many books on the shelves.','Children play on a sunny beach near the sea and an island. They make a sand castle with a bucket under an umbrella.','A girl walks on a wet street in the rain. She wears a coat and boots and carries an umbrella near the cars and flowers.','A happy girl celebrates her birthday with friends. There is a cake with candles, balloons, gifts and a party.','A happy boy wakes up in his bedroom in the morning. He gets out of bed near the clock, window and school bag.','Students eat rice and other food for lunch in the school canteen. They sit at a table and talk with friends.','A colorful butterfly, bee, ladybug and grasshopper are in the sunny garden. They are near flowers, a leaf and other plants.','A student buys a snack and a bottle at a small shop on the street. He gives money to the seller and carries a bag.'];
+function ptPos(i){return `${(i%3)*50}% ${Math.floor(i/3)*25}%`}
+function renderAnswerKey(){const g=document.getElementById('answerKeyGrade').value,grid=document.getElementById('answerKeyGrid'),sprite=g[0]==='P'?'assets/picture-talk-primary-sprite.png':'assets/picture-talk-secondary-sprite.png';grid.innerHTML=PT_SETS[g].map((scene,i)=>`<article class="answer-card"><div class="answer-scene" style="background-image:url('${sprite}');background-position:${ptPos(scene)}"></div><div class="answer-body"><span class="score-pill">${gradeThai(g)} • Challenge ${i+1}</span><h3>${PT_NAMES[scene]}</h3><b>10 Keywords (10 คะแนน)</b><div class="key-list">${PT_KEYWORDS[scene].map((w,n)=>`<span class="key-word">${n+1}. ${w}</span>`).join('')}</div><div class="sample-answer"><b>Sample Answer:</b><br>${PT_SAMPLES[scene]}</div></div></article>`).join('')}
+function showAnswerKey(){const g=['P4','P5','P6','M1','M2','M3'].includes(gradeEl.value)?gradeEl.value:'P4';document.getElementById('answerKeyGrade').value=g;renderAnswerKey();document.getElementById('answerKeyPanel').scrollIntoView({behavior:'smooth',block:'start'})}
 
 async function init(){
  populateYears();
@@ -236,6 +251,7 @@ async function render(){
 const requestedActivity=new URLSearchParams(location.search).get('from');
 if(requestedActivity==='reading'||requestedActivity==='speaking_out_loud')activityFilterEl.value=requestedActivity;
 sb.auth.onAuthStateChange((_e,session)=>showSession(session));
+renderAnswerKey();
 init();
 </script>
 </body></html>
