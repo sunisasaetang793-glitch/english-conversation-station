@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>คะแนนของฉัน | English Conversation Station</title>
+  <style>
+    :root{--navy:#12365e;--green:#16704b;--green2:#2aaa70;--blue:#2677c8;--gold:#ffd766;--red:#c94b5c;--orange:#d98119;--line:#d7e5ed}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:"Segoe UI",Tahoma,sans-serif;font-size:18px;color:var(--navy);background:linear-gradient(rgba(236,247,244,.36),rgba(255,249,235,.42)),url('assets/picture-talk-mountain-bg.png') center/cover fixed no-repeat}
+    .wrap{max-width:1200px;margin:auto;padding:20px}
+    .panel{background:rgba(255,255,255,.9);backdrop-filter:blur(9px);border:1px solid rgba(255,255,255,.95);border-radius:26px;padding:24px;box-shadow:0 14px 38px rgba(16,51,88,.15);margin-bottom:20px}
+    .hero{min-height:330px;display:flex;align-items:end;color:#fff;background:linear-gradient(105deg,rgba(6,42,61,.88),rgba(18,91,77,.52)),url('assets/picture-talk-mountain-bg.png') center 45%/cover}
+    h1{font-size:clamp(40px,7vw,72px);line-height:1;margin:10px 0;text-shadow:0 5px 22px rgba(0,0,0,.55)}
+    h2{font-size:31px;margin:0 0 14px}h3{font-size:24px;margin:0}
+    .hero p{font-size:21px;max-width:820px;line-height:1.55}
+    .tag{display:inline-block;padding:8px 14px;border-radius:999px;background:var(--gold);color:var(--navy);font-weight:900}
+    .nav,.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .btn{border:0;border-radius:15px;padding:13px 18px;min-height:52px;font:inherit;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .primary{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff}.blue{background:linear-gradient(135deg,#246cc0,#3c9be0);color:#fff}.light{background:rgba(239,246,251,.96);color:var(--navy);border:1px solid #c8dce8}
+    .fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    select{width:100%;min-height:58px;padding:12px 14px;border:1px solid #c9dce6;border-radius:15px;background:#fff;font:inherit;color:#17345a}
+    .status{margin-top:13px;padding:14px 16px;border-radius:15px;background:#eaf7f0;line-height:1.55}
+    .readonly{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(135deg,#edf8f2,#edf6ff);border-left:6px solid var(--green)}
+    .lock{width:44px;height:44px;flex:none;border-radius:14px;background:var(--green);color:#fff;font-weight:950;display:grid;place-items:center}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:18px}
+    .metric{padding:17px;border-radius:19px;background:linear-gradient(145deg,#f8fcff,#edf8f2);border:1px solid var(--line)}
+    .metric b{display:block;font-size:32px;margin-top:6px;color:var(--green)}
+    .activity-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .activity{overflow:hidden;padding:0}
+    .activity-head{display:flex;gap:13px;align-items:center;padding:20px;background:linear-gradient(135deg,rgba(234,247,240,.98),rgba(235,245,255,.98));border-bottom:1px solid var(--line)}
+    .activity-icon{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;color:#fff;font-size:23px;font-weight:950;background:linear-gradient(135deg,var(--blue),var(--green2));box-shadow:0 7px 16px rgba(27,100,123,.2)}
+    .activity-head p{margin:4px 0 0;color:#547087}
+    .activity-body{padding:18px}
+    .activity-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+    .mini{background:#f4f8fb;border-radius:13px;padding:10px;text-align:center}.mini b{display:block;font-size:22px;color:var(--green)}
+    .lesson-list{display:grid;gap:10px}
+    .lesson{display:grid;grid-template-columns:minmax(170px,1fr) auto auto;gap:10px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.92)}
+    .lesson-title{font-weight:850}.lesson-meta{font-size:14px;color:#60778a;margin-top:4px}
+    .score{min-width:76px;text-align:center;padding:8px 10px;border-radius:999px;font-weight:950}.score.high{background:#dff5e8;color:#12623e}.score.mid{background:#fff0ce;color:#94570d}.score.low{background:#fde5e8;color:#a22d40}
+    .retry{font-size:14px;padding:9px 11px;min-height:40px}
+    .empty{padding:18px;border-radius:15px;background:#f2f7fa;color:#667c8d;text-align:center}
+    .hidden{display:none!important}
+    @media(max-width:880px){body{font-size:20px;background-attachment:scroll}.wrap{padding:10px}.panel{padding:18px}.fields,.summary,.activity-grid{grid-template-columns:1fr}.hero{min-height:390px}.btn{width:100%}.lesson{grid-template-columns:1fr auto}.retry{grid-column:1/-1}.activity-stats{grid-template-columns:repeat(3,1fr)}select{font-size:20px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header class="panel hero">
+    <div>
+      <span class="tag">STUDENT SCORE PORTAL</span>
+      <h1>คะแนนของฉัน</h1>
+      <p>ดูบทเรียนที่ทำแล้ว คะแนนที่ดีที่สุด และหัวข้อที่ควรกลับไปฝึกซ้ำ คะแนนในหน้านี้เป็นแบบอ่านอย่างเดียว นักเรียนแก้ไขข้อมูลไม่ได้</p>
+      <nav class="nav">
+        <a class="btn light" href="index.html">หน้าหลัก</a>
+        <a class="btn light" href="speaking.html">Speaking Out Loud</a>
+        <a class="btn light" href="reading.html">Reading Part</a>
+        <a class="btn light" href="listening-games.html">Listening Games</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="panel readonly">
+    <div class="lock">RO</div>
+    <div><strong>อ่านได้อย่างเดียว (Read Only)</strong><br>หน้านี้ไม่มีปุ่มแก้ชื่อ แก้คะแนน หรือลบข้อมูล หากทำบทเดิมซ้ำ ระบบจะแสดงคะแนนที่สูงที่สุดของบทนั้นโดยอัตโนมัติ</div>
+  </section>
+
+  <section class="panel" id="gate">
+    <h2>เลือกชั้นและชื่อของตนเอง</h2>
+    <div class="fields">
+      <select id="grade"><option value="P4">ป.4</option><option value="P5">ป.5</option><option value="P6">ป.6</option><option value="M1">ม.1</option><option value="M2">ม.2</option><option value="M3">ม.3</option></select>
+      <select id="year"></select>
+      <select id="term"><option value="1">ภาคเรียน 1</option><option value="2">ภาคเรียน 2</option></select>
+      <select id="student"><option value="">— เลือกชื่อนักเรียน —</option></select>
+    </div>
+    <div class="status" id="status">กำลังโหลดรายชื่อนักเรียน...</div>
+  </section>
+
+  <section id="report" class="hidden">
+    <section class="panel">
+      <h2 id="studentHeading">สรุปความก้าวหน้า</h2>
+      <div class="summary">
+        <div class="metric">กิจกรรมที่เริ่มทำแล้ว<b id="activityCount">0/8</b></div>
+        <div class="metric">บท/ข้อสอบที่มีคะแนน<b id="lessonCount">0</b></div>
+        <div class="metric">คะแนนเฉลี่ยรวม<b id="average">0%</b></div>
+        <div class="metric">หัวข้อที่ควรฝึกซ้ำ<b id="retryCount">0</b></div>
+      </div>
+      <div class="status" id="advice"></div>
+    </section>
+    <div class="activity-grid" id="activities"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sb=supabase.createClient('https://zbmrjexpugcwawvmrtyo.supabase.co','sb_publishable_E7iFH6DFoonjDt5WdSYbSQ_HGTB8pbY');
+const $=id=>document.getElementById(id),grade=$('grade'),year=$('year'),term=$('term'),student=$('student'),statusEl=$('status'),report=$('report'),activitiesEl=$('activities');
+const ACTIVITY_ORDER=['conversation','speaking_out_loud','reading','picture_talk','listen_choose','who_am_i','midterm_exam','final_exam'];
+const META={
+  conversation:{short:'C',title:'English Conversation',th:'บทสนทนา',goal:5,href:'index.html'},
+  speaking_out_loud:{short:'S',title:'Speaking Out Loud',th:'ฝึกออกเสียง',goal:5,href:'speaking.html'},
+  reading:{short:'R',title:'Reading Part',th:'บทอ่าน',goal:5,href:'reading.html'},
+  picture_talk:{short:'P',title:'Picture Talk Challenge',th:'พูดบรรยายภาพ',goal:5,href:'picture-talk.html'},
+  listen_choose:{short:'L',title:'Listen and Choose',th:'ฟังแล้วเลือกรูป',goal:5,href:'listening-games.html'},
+  who_am_i:{short:'W',title:'Who Am I?',th:'ฟังคำใบ้แล้วทาย',goal:5,href:'listening-games.html'},
+  midterm_exam:{short:'M',title:'Midterm Examination',th:'ข้อสอบกลางภาค',goal:1,href:'exams.html'},
+  final_exam:{short:'F',title:'Final Examination',th:'ข้อสอบปลายภาค',goal:1,href:'exams.html'}
+};
+let currentStudents=[];
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function gradeThai(g){return g.replace('P','ป.').replace('M','ม.')}
+function beToCe(v){return Number(v)-543}
+function years(){const y=new Date().getFullYear()+543;for(let n=y-2;n<=y+2;n++)year.add(new Option('ปีการศึกษา '+n,n,n===y,n===y))}
+function scoreClass(score,max){const p=Number(score)/Number(max||10);return p>=.8?'high':p>=.6?'mid':'low'}
+function scoreText(score){const n=Number(score);return Number.isInteger(n)?String(n):n.toFixed(1)}
+function dateText(value){return value?new Date(value).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'}):'-'}
+function detailText(row){const d=row.details||{},parts=[];if(d.vocabulary_score!=null)parts.push('คำศัพท์ '+d.vocabulary_score+'/10');if(d.quiz_score!=null)parts.push('Quiz '+d.quiz_score+'/10');else if(d.sentence_score!=null)parts.push('ประโยค '+d.sentence_score+'/10');if(d.correct_answers!=null)parts.push('ตอบถูก '+d.correct_answers+'/'+(d.total_questions??'?'));if(d.keywords_found_count!=null)parts.push('พบคำสำคัญ '+d.keywords_found_count+'/10');if(d.listening_score!=null)parts.push('ฟัง '+d.listening_score+'/10');if(d.conversation_score!=null)parts.push('สนทนา '+d.conversation_score+'/10');if(d.speaking_score!=null)parts.push('พูด '+d.speaking_score+'/10');if(d.teacher_adjusted===true)parts.push('ครูปรับคะแนนแล้ว');return parts.join(' • ')}
+function retryHref(base){const q=new URLSearchParams({grade:grade.value,year:year.value,term:term.value,student:student.value});return base+'?'+q.toString()}
+
+async function loadStudents(){
+  report.classList.add('hidden');student.innerHTML='<option value="">— เลือกชื่อนักเรียน —</option>';currentStudents=[];statusEl.textContent='กำลังโหลดรายชื่อนักเรียน...';
+  const {data:c,error}=await sb.from('school_classes').select('id').eq('grade_level',grade.value).eq('academic_year',beToCe(year.value)).eq('term',Number(term.value)).eq('is_active',true).maybeSingle();
+  if(error||!c){statusEl.textContent='ยังไม่พบห้องเรียนในปีการศึกษาและภาคเรียนนี้';return}
+  const {data:ss,error:e}=await sb.from('students').select('id,student_no,full_name').eq('class_id',c.id).eq('is_active',true).order('student_no');
+  if(e){statusEl.textContent='โหลดรายชื่อไม่สำเร็จ กรุณาลองใหม่';return}
+  currentStudents=ss||[];currentStudents.forEach((s,i)=>student.add(new Option(`ลำดับที่ ${i+1} — ${s.full_name}`,s.id)));
+  statusEl.textContent=currentStudents.length?`พบรายชื่อ ${currentStudents.length} คน กรุณาเลือกชื่อของตนเอง`:'ห้องนี้ยังไม่มีรายชื่อนักเรียน';
+  restoreStudent();
+}
+function restoreStudent(){try{const saved=JSON.parse(sessionStorage.getItem('ivsaa_score_context')||'null');if(saved&&saved.grade===grade.value&&String(saved.year)===year.value&&String(saved.term)===term.value&&[...student.options].some(o=>o.value===String(saved.student))){student.value=String(saved.student);loadProgress()}}catch(_){}}
+async function loadProgress(){
+  if(!student.value){report.classList.add('hidden');statusEl.textContent='กรุณาเลือกชื่อของตนเอง';return}
+  const s=currentStudents.find(x=>String(x.id)===student.value);sessionStorage.setItem('ivsaa_score_context',JSON.stringify({grade:grade.value,year:year.value,term:term.value,student:student.value}));
+  statusEl.textContent='กำลังอ่านคะแนนล่าสุด...';
+  const {data,error}=await sb.rpc('get_student_progress',{p_student_id:Number(student.value),p_grade:grade.value,p_academic_year_be:Number(year.value),p_term:Number(term.value)});
+  if(error){report.classList.add('hidden');statusEl.textContent='อ่านคะแนนไม่สำเร็จ กรุณาตรวจชั้น ปีการศึกษา ภาคเรียน และชื่ออีกครั้ง';return}
+  const rows=data||[];renderReport(s,rows);statusEl.textContent=`แสดงคะแนนที่ดีที่สุดของ ${s?.full_name||'นักเรียน'} • อัปเดตล่าสุดแล้ว`;
+}
+function renderReport(s,rows){
+  report.classList.remove('hidden');$('studentHeading').textContent=`${s?.full_name||''} • ${gradeThai(grade.value)} ปีการศึกษา ${year.value} ภาคเรียน ${term.value}`;
+  const started=new Set(rows.map(r=>r.activity_type)).size,totalPercent=rows.reduce((sum,r)=>sum+(Number(r.best_score)/Number(r.max_score||10))*100,0),avg=rows.length?Math.round(totalPercent/rows.length):0,retry=rows.filter(r=>Number(r.best_score)/Number(r.max_score||10)<.7).length;
+  $('activityCount').textContent=started+'/8';$('lessonCount').textContent=rows.length;$('average').textContent=avg+'%';$('retryCount').textContent=retry;
+  $('advice').innerHTML=!rows.length?'ยังไม่มีคะแนนค่ะ เลือกกิจกรรมด้านล่างเพื่อเริ่มฝึก':retry?`มี <strong>${retry} หัวข้อ</strong> ที่คะแนนต่ำกว่า 70% กด “ทำอีกครั้ง” เพื่อฝึกและเพิ่มคะแนน ระบบจะเก็บคะแนนที่สูงที่สุดให้ค่ะ`:'คะแนนดีมากค่ะ หากทำซ้ำแล้วได้คะแนนสูงกว่า ระบบจะแสดงคะแนนใหม่แทนคะแนนเดิม';
+  const grouped=Object.fromEntries(ACTIVITY_ORDER.map(k=>[k,rows.filter(r=>r.activity_type===k)]));
+  activitiesEl.innerHTML=ACTIVITY_ORDER.map(key=>renderActivity(key,grouped[key])).join('');
+}
+function renderActivity(key,rows){
+  const m=META[key],done=rows.length,goal=m.goal,avg=done?(rows.reduce((a,r)=>a+(Number(r.best_score)/Number(r.max_score||10))*100,0)/done):0,low=rows.filter(r=>Number(r.best_score)/Number(r.max_score||10)<.7).length;
+  const list=rows.length?`<div class="lesson-list">${rows.sort((a,b)=>new Date(b.latest_attempt_at)-new Date(a.latest_attempt_at)).map(r=>{const cls=scoreClass(r.best_score,r.max_score),detail=detailText(r);return `<div class="lesson"><div><div class="lesson-title">${esc(r.lesson_title)}</div><div class="lesson-meta">ทำ ${r.attempts_count} ครั้ง • ล่าสุด ${dateText(r.latest_attempt_at)}${detail?'<br>'+esc(detail):''}</div></div><span class="score ${cls}">${scoreText(r.best_score)}/${scoreText(r.max_score)}</span><a class="btn ${cls==='low'?'primary':'light'} retry" href="${retryHref(m.href)}">${cls==='low'?'ทำอีกครั้ง':'ฝึกเพิ่ม'}</a></div>`}).join('')}</div>`:`<div class="empty">ยังไม่มีคะแนนในกิจกรรมนี้</div>`;
+  return `<article class="panel activity"><div class="activity-head"><div class="activity-icon">${m.short}</div><div><h3>${m.title}</h3><p>${m.th}</p></div></div><div class="activity-body"><div class="activity-stats"><div class="mini">ทำแล้ว<b>${done}</b></div><div class="mini">เป้าหมายขั้นต่ำ<b>${Math.min(done,goal)}/${goal}</b></div><div class="mini">เฉลี่ย<b>${done?Math.round(avg)+'%':'-'}</b></div></div>${list}<div class="actions"><a class="btn blue" href="${retryHref(m.href)}">เข้าแบบฝึก ${m.title}</a>${low?`<span class="status">ควรฝึกซ้ำ ${low} หัวข้อ</span>`:''}</div></div></article>`;
+}
+grade.onchange=loadStudents;year.onchange=loadStudents;term.onchange=loadStudents;student.onchange=loadProgress;
+years();loadStudents();
+</script>
+</body>
+</html>
